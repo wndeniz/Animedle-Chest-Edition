@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Karakter Tahmin Oyunu</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Autocomplete kutusu */
+        .autocomplete-items {
+            position: absolute;
+            background-color: #1e1e1e;
+            border: 1px solid #444;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+            width: 250px;
+        }
+
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .autocomplete-items div:hover {
+            background-color: #03dac6;
+            color: black;
+        }
+
+        .autocomplete-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ONEPIECEDLE (CHEST EDITION)</h1>
+        <hr>
+    </header>
+
+    <main>
+        <img src="{{ url_for('static', filename='images/' + image) }}" alt="Karakter">
+
+        <form method="post" autocomplete="off">
+            <div class="autocomplete-wrapper">
+                <input id="guessInput" type="text" name="guess" placeholder="Tahmininizi yazın" required>
+                <button type="submit" title="Gönder">&#10148;</button> <!-- unicode arrow -->
+                <div id="autocomplete-list" class="autocomplete-items"></div>
+            </div>
+        </form>
+
+        <p>{{ message }}</p>
+        <p>Kalan hak: {{ lives }}</p>
+        <div class="wrong-answers">
+            {% for wrong in session['wrong_guesses'] %}
+                <div class="wrong-box">{{ wrong }}</div>
+            {% endfor %}
+        </div>
+        
+    </main>
+</body>
+
+    <script>
+        let characters = [];
+
+        // Sayfa yüklendiğinde karakter listesini çek
+        window.onload = () => {
+            fetch('/characters')
+                .then(res => res.json())
+                .then(data => characters = data);
+        };
+
+        const input = document.getElementById("guessInput");
+        const listContainer = document.getElementById("autocomplete-list");
+
+        input.addEventListener("input", function () {
+            const val = this.value.toLowerCase();
+            listContainer.innerHTML = "";
+
+            if (!val) return;
+
+            const matches = characters.filter(c =>
+                c.toLowerCase().startsWith(val)
+            );
+
+            matches.forEach(match => {
+                const item = document.createElement("div");
+                item.textContent = match;
+                item.addEventListener("click", function () {
+                    input.value = match;
+                    listContainer.innerHTML = "";
+                });
+                listContainer.appendChild(item);
+            });
+        });
+
+        // Listeyi kapatmak için sayfada başka yere tıklanınca
+        document.addEventListener("click", function (e) {
+            if (!e.target.closest(".autocomplete-wrapper")) {
+                listContainer.innerHTML = "";
+            }
+        });
+    </script>
+</body>
+</html>
